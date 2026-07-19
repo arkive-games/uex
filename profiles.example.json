@@ -1,0 +1,20 @@
+{
+  "profiles": {
+    "palworld": {
+      "game": "GAME_Palworld",
+      "paksDir": "E:/SteamLibrary/steamapps/common/Palworld/Pal/Content/Paks",
+      "usmap": "FILL_ME/Palworld.usmap",
+      "aesKey": null,
+      "outputDir": "E:/SteamLibrary/steamapps/common/Palworld/Exports",
+      "exportRoots": ["Pal/Content/Pal", "Pal/Content/L10N", "Pal/Config"]
+    },
+    "aion2": {
+      "game": "GAME_Aion2",
+      "paksDir": "G:/NCSoft/AION2_TW/Aion2/Content/Paks",
+      "usmap": "G:/NCSoft/FModel/AION2-5.3.2.0-1.0.34.0.usmap",
+      "aesKey": "0xFILL_ME",
+      "outputDir": "G:/NCSoft/Export/Exports",
+      "exportRoots": ["AION2/Content/Data", "AION2/Content/UI"]
+    }
+  }
+}
