@@ -58,9 +58,11 @@ public sealed class UexMcpTools(ProfilesConfig config, ProviderManager providers
         [Description("PNG output file path; default: a temp file")] string? outPath = null)
     {
         var provider = providers.Get(profile);
+        var vpath = AssetOps.ResolvePackagePath(provider, asset);
+        // default name encodes the full virtual path so same-named textures from different dirs don't clobber
         outPath ??= Path.Combine(Path.GetTempPath(), "uex",
-            Path.GetFileNameWithoutExtension(asset) + ".png");
-        return AssetOps.SavePng(provider, AssetOps.ResolvePackagePath(provider, asset), outPath);
+            Path.ChangeExtension(vpath, null)!.Replace('/', '_') + ".png");
+        return AssetOps.SavePng(provider, vpath, outPath);
     }
 
     [McpServerTool(Name = "export_assets"), Description("Batch export to the profile's outputDir (FModel-compatible JSON/PNG tree). With no 'only', exports the profile's configured exportRoots.")]
