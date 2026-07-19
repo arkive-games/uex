@@ -58,4 +58,28 @@ doctorCommand.SetAction(parse => Run(() =>
 }));
 root.Subcommands.Add(doctorCommand);
 
+// ---- export ----------------------------------------------------------------
+var onlyOption = new Option<string[]>("--only") { Description = "Export only these virtual paths/prefixes (default: profile exportRoots)", AllowMultipleArgumentsPerToken = true };
+var exportCommand = new Command("export", "Batch export to the profile's outputDir (FModel-compatible JSON/PNG tree)");
+exportCommand.Options.Add(profileOption);
+exportCommand.Options.Add(onlyOption);
+exportCommand.SetAction(parse => Run(() =>
+{
+    var config = ProfilesConfig.LoadDefault(parse.GetValue(configOption));
+    var profileName = parse.GetValue(profileOption)!;
+    var profile = config.GetProfile(profileName);
+    using var providers = new ProviderManager(config);
+    var summary = ExportRunner.Run(providers.Get(profileName), profile,
+        parse.GetValue(onlyOption), msg => Console.Error.WriteLine(msg));
+    Console.WriteLine($"exported: {summary.Packages} packages, {summary.Textures} textures, {summary.RawFiles} raw files -> {profile.OutputDir}");
+    if (summary.Errors.Count > 0)
+    {
+        Console.Error.WriteLine($"{summary.Errors.Count} assets failed:");
+        foreach (var error in summary.Errors.Take(20)) Console.Error.WriteLine($"  {error}");
+        if (summary.Errors.Count > 20) Console.Error.WriteLine($"  ... and {summary.Errors.Count - 20} more");
+    }
+    return 0; // partial parse failures are normal for a full-tree export; doctor is the health gate
+}));
+root.Subcommands.Add(exportCommand);
+
 return root.Parse(args).Invoke();
