@@ -134,3 +134,10 @@ dotnet publish src/Uex -c Release -o publish
 Unit tests cover the pure logic only (`Core/OutputPaths`, `Core/VfsQuery`, config
 loading) and require no paks. Real-pak verification is `doctor` against an
 installed game.
+
+## License
+
+Copyright (c) 2026 Yihao Liu (tc-imba)
+
+Licensed under the [Apache License 2.0](LICENSE) — the same license as
+[CUE4Parse](https://github.com/FabianFG/CUE4Parse), which this tool is built on.
