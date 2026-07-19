@@ -45,7 +45,7 @@ public sealed class UexMcpTools(ProfilesConfig config, ProviderManager providers
     public string PreviewAsset(
         [Description("Game profile name")] string profile,
         [Description("Virtual asset path; .uasset/.umap extension optional")] string asset,
-        [Description("Truncate JSON beyond this many characters")] int maxBytes = 100_000)
+        [Description("Truncate JSON beyond this many characters")] int maxBytes = 100_000) // lower than the CLI's 200k: tool results land in an agent's context window
     {
         var provider = providers.Get(profile);
         return AssetOps.Preview(provider, AssetOps.ResolvePackagePath(provider, asset), maxBytes);
@@ -74,7 +74,7 @@ public sealed class UexMcpTools(ProfilesConfig config, ProviderManager providers
         var summary = ExportRunner.Run(providers.Get(profile), gameProfile, only);
         var errors = summary.Errors.Count == 0 ? "" :
             $"\nerrors ({summary.Errors.Count}):\n" + string.Join("\n", summary.Errors.Take(20));
-        return $"exported {summary.Packages} packages, {summary.Textures} textures, {summary.RawFiles} raw files, {summary.DecodedData} decoded data files -> {gameProfile.OutputDir}{errors}";
+        return $"exported {summary.Packages} packages, {summary.Textures} textures, {summary.DecodedData} decoded data, {summary.RawFiles} raw files -> {gameProfile.OutputDir}{errors}";
     }
 }
 
