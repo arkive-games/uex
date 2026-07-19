@@ -71,7 +71,7 @@ exportCommand.SetAction(parse => Run(() =>
     using var providers = new ProviderManager(config);
     var summary = ExportRunner.Run(providers.Get(profileName), profile,
         parse.GetValue(onlyOption), msg => Console.Error.WriteLine(msg));
-    Console.WriteLine($"exported: {summary.Packages} packages, {summary.Textures} textures, {summary.RawFiles} raw files -> {profile.OutputDir}");
+    Console.WriteLine($"exported: {summary.Packages} packages, {summary.Textures} textures, {summary.DecodedData} decoded data, {summary.RawFiles} raw files -> {profile.OutputDir}");
     if (summary.Errors.Count > 0)
     {
         Console.Error.WriteLine($"{summary.Errors.Count} assets failed:");

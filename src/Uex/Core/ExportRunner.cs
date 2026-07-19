@@ -6,7 +6,7 @@ using Uex.Config;
 
 namespace Uex.Core;
 
-public sealed record ExportSummary(int Packages, int Textures, int RawFiles, List<string> Errors);
+public sealed record ExportSummary(int Packages, int Textures, int RawFiles, int DecodedData, List<string> Errors);
 
 /// <summary>Batch export of everything under the profile's exportRoots (or an explicit subset) into the FModel-compatible tree.</summary>
 public static class ExportRunner
@@ -26,8 +26,9 @@ public static class ExportRunner
         if (targets.Count == 0)
             throw new UexException($"No files under roots [{string.Join(", ", roots)}].");
 
-        int packages = 0, textures = 0, rawFiles = 0, done = 0;
+        int packages = 0, textures = 0, rawFiles = 0, decodedData = 0, done = 0;
         var errors = new ConcurrentBag<string>();
+        var game = provider.Versions.Game;
         Parallel.ForEach(targets, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, vpath =>
         {
             try
@@ -50,6 +51,22 @@ public static class ExportRunner
                         Interlocked.Increment(ref textures);
                     }
                 }
+                else if (Aion2Dat.Handles(game, vpath))
+                {
+                    try
+                    {
+                        WriteText(profile.OutputDir, OutputPaths.ForPackageJson(vpath),
+                            Aion2Dat.ToJson(provider, vpath));
+                        Interlocked.Increment(ref decodedData);
+                    }
+                    catch (Exception e)
+                    {
+                        // Decode failed: record it, then preserve the file as a raw copy so nothing is lost.
+                        errors.Add($"{vpath}: decode failed ({e.Message}); wrote raw copy");
+                        WriteBytes(profile.OutputDir, OutputPaths.ForRaw(vpath), provider.Files[vpath].Read());
+                        Interlocked.Increment(ref rawFiles);
+                    }
+                }
                 else
                 {
                     WriteBytes(profile.OutputDir, OutputPaths.ForRaw(vpath), provider.Files[vpath].Read());
@@ -63,7 +80,7 @@ public static class ExportRunner
             var current = Interlocked.Increment(ref done);
             if (current % 500 == 0) log?.Invoke($"{current}/{targets.Count} ...");
         });
-        return new ExportSummary(packages, textures, rawFiles, [.. errors.Order()]);
+        return new ExportSummary(packages, textures, rawFiles, decodedData, [.. errors.Order()]);
     }
 
     private static void WriteText(string outDir, string relPath, string content)
