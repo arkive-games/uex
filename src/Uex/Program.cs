@@ -157,4 +157,11 @@ previewTextureCommand.SetAction(parse => Run(() =>
 }));
 root.Subcommands.Add(previewTextureCommand);
 
+// ---- serve -----------------------------------------------------------------
+var serveCommand = new Command("serve", "JSON-lines request/response server on stdin/stdout (all profiles, lazy mounts)");
+serveCommand.SetAction(parse => Run(() =>
+    new Uex.Serve.ServeLoop(ProfilesConfig.LoadDefault(parse.GetValue(configOption)))
+        .Run(Console.In, Console.Out)));
+root.Subcommands.Add(serveCommand);
+
 return root.Parse(args).Invoke();
