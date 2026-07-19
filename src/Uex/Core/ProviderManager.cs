@@ -24,8 +24,19 @@ public sealed class ProviderManager(ProfilesConfig config) : IDisposable
     public DefaultFileProvider Get(string profileName)
     {
         var profile = config.GetProfile(profileName); // throws UexException for unknown names
-        return _providers.GetOrAdd(profileName,
-            _ => new Lazy<DefaultFileProvider>(() => Mount(profileName, profile))).Value;
+        var lazy = _providers.GetOrAdd(profileName,
+            _ => new Lazy<DefaultFileProvider>(() => Mount(profileName, profile)));
+        try
+        {
+            return lazy.Value;
+        }
+        catch
+        {
+            // Lazy caches its exception forever — evict so a long-lived serve/MCP
+            // process can retry the mount after the user fixes the profile.
+            _providers.TryRemove(new KeyValuePair<string, Lazy<DefaultFileProvider>>(profileName, lazy));
+            throw;
+        }
     }
 
     private static DefaultFileProvider Mount(string name, GameProfile p)
