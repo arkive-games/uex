@@ -82,4 +82,79 @@ exportCommand.SetAction(parse => Run(() =>
 }));
 root.Subcommands.Add(exportCommand);
 
+// ---- list ------------------------------------------------------------------
+var listPathArg = new Argument<string>("path") { Description = "Virtual directory ('' = root)", DefaultValueFactory = _ => "" };
+var listCommand = new Command("list", "List children of a virtual directory (like FModel's tree)");
+listCommand.Options.Add(profileOption);
+listCommand.Arguments.Add(listPathArg);
+listCommand.SetAction(parse => Run(() =>
+{
+    var config = ProfilesConfig.LoadDefault(parse.GetValue(configOption));
+    using var providers = new ProviderManager(config);
+    var provider = providers.Get(parse.GetValue(profileOption)!);
+    foreach (var entry in VfsQuery.List(provider.Files.Keys, parse.GetValue(listPathArg)!))
+        Console.WriteLine(entry.IsDirectory ? entry.Name + "/" : entry.Name);
+    return 0;
+}));
+root.Subcommands.Add(listCommand);
+
+// ---- search ----------------------------------------------------------------
+var patternArg = new Argument<string>("pattern") { Description = "Substring (default) or regex with --regex" };
+var regexOption = new Option<bool>("--regex") { Description = "Treat pattern as a regex" };
+var limitOption = new Option<int>("--limit") { Description = "Max results to print", DefaultValueFactory = _ => 200 };
+var searchCommand = new Command("search", "Search all virtual paths");
+searchCommand.Options.Add(profileOption);
+searchCommand.Options.Add(regexOption);
+searchCommand.Options.Add(limitOption);
+searchCommand.Arguments.Add(patternArg);
+searchCommand.SetAction(parse => Run(() =>
+{
+    var config = ProfilesConfig.LoadDefault(parse.GetValue(configOption));
+    using var providers = new ProviderManager(config);
+    var provider = providers.Get(parse.GetValue(profileOption)!);
+    var result = VfsQuery.Search(provider.Files.Keys, parse.GetValue(patternArg)!,
+        parse.GetValue(regexOption), parse.GetValue(limitOption));
+    foreach (var match in result.Matches) Console.WriteLine(match);
+    if (result.Total > result.Matches.Count)
+        Console.Error.WriteLine($"({result.Matches.Count} of {result.Total} matches shown - raise --limit)");
+    return 0;
+}));
+root.Subcommands.Add(searchCommand);
+
+// ---- preview ---------------------------------------------------------------
+var assetArg = new Argument<string>("asset") { Description = "Virtual asset path (.uasset/.umap extension optional)" };
+var maxBytesOption = new Option<int>("--max-bytes") { Description = "Truncate JSON beyond this size", DefaultValueFactory = _ => 200_000 };
+var previewCommand = new Command("preview", "Serialize an asset to JSON on stdout");
+previewCommand.Options.Add(profileOption);
+previewCommand.Options.Add(maxBytesOption);
+previewCommand.Arguments.Add(assetArg);
+previewCommand.SetAction(parse => Run(() =>
+{
+    var config = ProfilesConfig.LoadDefault(parse.GetValue(configOption));
+    using var providers = new ProviderManager(config);
+    var provider = providers.Get(parse.GetValue(profileOption)!);
+    var vpath = AssetOps.ResolvePackagePath(provider, parse.GetValue(assetArg)!);
+    Console.WriteLine(AssetOps.Preview(provider, vpath, parse.GetValue(maxBytesOption)));
+    return 0;
+}));
+root.Subcommands.Add(previewCommand);
+
+// ---- preview-texture ---------------------------------------------------------
+var texAssetArg = new Argument<string>("asset") { Description = "Virtual asset path of a texture package" };
+var outOption = new Option<string>("--out") { Description = "PNG output file path", Required = true };
+var previewTextureCommand = new Command("preview-texture", "Decode a texture asset to a PNG file");
+previewTextureCommand.Options.Add(profileOption);
+previewTextureCommand.Options.Add(outOption);
+previewTextureCommand.Arguments.Add(texAssetArg);
+previewTextureCommand.SetAction(parse => Run(() =>
+{
+    var config = ProfilesConfig.LoadDefault(parse.GetValue(configOption));
+    using var providers = new ProviderManager(config);
+    var provider = providers.Get(parse.GetValue(profileOption)!);
+    var vpath = AssetOps.ResolvePackagePath(provider, parse.GetValue(texAssetArg)!);
+    Console.WriteLine(AssetOps.SavePng(provider, vpath, parse.GetValue(outOption)!));
+    return 0;
+}));
+root.Subcommands.Add(previewTextureCommand);
+
 return root.Parse(args).Invoke();
