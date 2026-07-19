@@ -29,6 +29,7 @@ public static class ExportRunner
         int packages = 0, textures = 0, rawFiles = 0, decodedData = 0, done = 0;
         var errors = new ConcurrentBag<string>();
         var game = provider.Versions.Game;
+        Aion2Dat.Warmup(provider, game);
         Parallel.ForEach(targets, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, vpath =>
         {
             try
@@ -61,10 +62,18 @@ public static class ExportRunner
                     }
                     catch (Exception e)
                     {
-                        // Decode failed: record it, then preserve the file as a raw copy so nothing is lost.
-                        errors.Add($"{vpath}: decode failed ({e.Message}); wrote raw copy");
-                        WriteBytes(profile.OutputDir, OutputPaths.ForRaw(vpath), provider.Files[vpath].Read());
-                        Interlocked.Increment(ref rawFiles);
+                        // Decode failed: preserve the file as a raw copy so nothing is lost.
+                        var raw = provider.Files[vpath].SafeRead();
+                        if (raw is not null)
+                        {
+                            WriteBytes(profile.OutputDir, OutputPaths.ForRaw(vpath), raw);
+                            Interlocked.Increment(ref rawFiles);
+                            errors.Add($"{vpath}: decode failed ({e.Message}); wrote raw copy");
+                        }
+                        else
+                        {
+                            errors.Add($"{vpath}: decode failed ({e.Message}); raw read also failed");
+                        }
                     }
                 }
                 else

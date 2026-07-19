@@ -1,5 +1,6 @@
 using System.Text;
 using CUE4Parse.FileProvider;
+using CUE4Parse.GameTypes.Aion2.Encryption.Aes;
 using CUE4Parse.GameTypes.Aion2.Objects;
 using CUE4Parse.UE4.Versions;
 using Newtonsoft.Json;
@@ -38,6 +39,15 @@ public static class Aion2Dat
             || lower.Contains(WorldMapDir)
             || lower.Contains(MapEventDir)
             || lower.Contains(MapDir);
+    }
+
+    /// <summary>Populate the AION2 AES key cache single-threaded before parallel decoding —
+    /// CUE4Parse's Aion2DatFileAes.Initialize has a check-then-act race on static state.</summary>
+    public static void Warmup(DefaultFileProvider provider, EGame game)
+    {
+        if (game != EGame.GAME_Aion2) return;
+        try { Aion2DatFileAes.Initialize(provider); }
+        catch { /* no key manifest mounted — per-file decodes will fail and fall back to raw copies */ }
     }
 
     /// <summary>Decode to FModel-compatible JSON. Throws on failure (caller decides fallback).</summary>
