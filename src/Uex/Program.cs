@@ -164,4 +164,20 @@ serveCommand.SetAction(parse => Run(() =>
         .Run(Console.In, Console.Out)));
 root.Subcommands.Add(serveCommand);
 
+// ---- mcp -------------------------------------------------------------------
+var mcpCommand = new Command("mcp", "MCP stdio server exposing list/search/preview/export tools for all profiles");
+mcpCommand.SetAction((parse, cancellationToken) =>
+{
+    try
+    {
+        return Uex.Mcp.McpHost.RunAsync(ProfilesConfig.LoadDefault(parse.GetValue(configOption)));
+    }
+    catch (UexException e)
+    {
+        Console.Error.WriteLine($"error: {e.Message}");
+        return Task.FromResult(1);
+    }
+});
+root.Subcommands.Add(mcpCommand);
+
 return root.Parse(args).Invoke();
