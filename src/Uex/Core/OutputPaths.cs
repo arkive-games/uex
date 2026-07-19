@@ -37,7 +37,9 @@ public static class OutputPaths
 
     private static string SwapExtension(string vpath, string newExt)
     {
+        // only a dot in the final segment is an extension — directory names may contain dots
         var dot = vpath.LastIndexOf('.');
-        return (dot < 0 ? vpath : vpath[..dot]) + newExt;
+        var lastSlash = Math.Max(vpath.LastIndexOf('/'), vpath.LastIndexOf('\\'));
+        return (dot > lastSlash ? vpath[..dot] : vpath) + newExt;
     }
 }

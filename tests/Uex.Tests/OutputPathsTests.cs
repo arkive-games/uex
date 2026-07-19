@@ -28,6 +28,13 @@ public class OutputPathsTests
     }
 
     [Fact]
+    public void PackageJson_ignores_dots_in_directory_names()
+    {
+        Assert.Equal("Mod.v1/Content/DT_X.json", OutputPaths.ForPackageJson("Mod.v1/Content/DT_X.uasset"));
+        Assert.Equal("Mod.v1/Content/NoExt.json", OutputPaths.ForPackageJson("Mod.v1/Content/NoExt"));
+    }
+
+    [Fact]
     public void PackageJson_swaps_extension()
     {
         Assert.Equal("Pal/Content/Pal/DataTable/DT_X.json",
