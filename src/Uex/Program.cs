@@ -13,6 +13,7 @@ int Run(Func<int> action)
 {
     try { return action(); }
     catch (UexException e) { Console.Error.WriteLine($"error: {e.Message}"); return 1; }
+    catch (Exception e) { Console.Error.WriteLine($"unexpected error: {e.GetType().Name}: {e.Message}"); return 1; }
 }
 
 // ---- doctor ----------------------------------------------------------------
