@@ -118,6 +118,14 @@ transparently serves all configured games with lazy mounting and a per-profile
   (byte-identical verified): Table files (key-manifest AES + LZ4), Map/WorldMap
   (keystream), MapEvent (decrypted JSON text), and the MapDataHierarchy reader.
   All of this is isolated in `Core/Aion2Dat.cs`.
+- **Lord of Mysteries** (诡秘之主; launcher `GMZZLauncher`, UE project `C7`) needs
+  `"game": "GAME_LordOfMysteries"` — the game-specific `0x05070004` (`84344836`),
+  **not** plain `GAME_UE5_7` (`0x05070000`). FModel writes that same number as the
+  profile's `UeVersion`, so copy it rather than reading "5.7" off the usmap name.
+  Its containers use a `.upak` extension for ordinary `.pak` files; CUE4Parse
+  mounts them. Note the client is `Online_Shipping.Windows.Cdn` and ships only
+  two `.utoc` — the rest of its data streams through IoStore On-Demand, so a
+  local install exposes the script and audio containers but almost no cooked art.
 - **First mount downloads native decompression DLLs** (Oodle, zlib) into a
   `.uex-cache/` directory next to the executable — this needs network access
   once. Subsequent runs are offline.
