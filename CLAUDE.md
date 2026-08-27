@@ -32,9 +32,18 @@ arkive pipeline (E:\arkive-games\arkive) and gives agents pak exploration via CL
 - Output layout compatibility with FModel is a hard contract — the arkive `tools/`
   pipeline consumes it (`PALWORLD_RAW` etc.). Semantic JSON equality is the bar;
   for AION2 .dat decoding, byte-identity with the FModel reference was verified.
-- CUE4Parse pins: net10.0-only package. The NuGet packages ARE the GitHub releases
-  (identical .nupkg assets, e.g. 1.2.2.202607) — no separate "GitHub build" exists;
-  bump by taking the newest release tag. When bumping, re-run doctor + an export diff.
+- CUE4Parse is a **pinned submodule** (`external/CUE4Parse`, ProjectReference), not the
+  NuGet package. Clone with `--recurse-submodules`. The releases lag source by weeks and
+  new games land in source first: Lord of Mysteries' container support was absent from
+  1.2.2.202608 and its absence is *silent* — the generic provider just doesn't mount the
+  containers it can't describe, so the profile looks fine and comes up 3/4 short. Bump by
+  moving the submodule and re-running doctor + an export diff; go back to PackageReference
+  only if a release ever carries everything in use.
+- Source moves under you: `Aion2DatFileAes` became `Aion2DatFileEncryption`, and
+  `ETextureFormat` moved to `CUE4Parse_Conversion.Options`. A ProjectReference also does
+  not propagate the package's global usings, so namespaces must be spelled out.
+- Games with their own container layout need their own provider — see
+  `ProviderManager.CreateProvider`. Add the mapping there, never at the call site.
 - Test files need explicit `using Xunit;` (ImplicitUsings doesn't cover it).
 
 ## Plan / history

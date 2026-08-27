@@ -8,9 +8,19 @@
     <RootNamespace>Uex</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
+  <PropertyGroup>
+    <!-- CUE4Parse's own warnings are not ours to fix; keep our build output readable. -->
+    <NoWarn>$(NoWarn);CA2022</NoWarn>
+  </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CUE4Parse" Version="1.2.2.202607" />
-    <PackageReference Include="CUE4Parse-Conversion" Version="1.2.2.202607" />
+    <!-- Built from the pinned submodule, NOT the NuGet package. Games land in CUE4Parse
+         source well before a release: Lord of Mysteries' container support (its
+         LoMDefaultFileProvider reads package.manifest for the container set and
+         Manifest_UFSFiles_Win64.txt for chunk names) is absent from 1.2.2.202608, and
+         without it that game mounts 148k files instead of 591k and exposes almost no
+         cooked art. Re-point these at PackageReference once a release includes it. -->
+    <ProjectReference Include="../../external/CUE4Parse/CUE4Parse/CUE4Parse.csproj" />
+    <ProjectReference Include="../../external/CUE4Parse/CUE4Parse-Conversion/CUE4Parse-Conversion.csproj" />
     <PackageReference Include="System.CommandLine" Version="2.0.10" />
     <PackageReference Include="ModelContextProtocol" Version="1.4.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />

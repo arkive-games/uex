@@ -42,11 +42,11 @@ public static class Aion2Dat
     }
 
     /// <summary>Populate the AION2 AES key cache single-threaded before parallel decoding —
-    /// CUE4Parse's Aion2DatFileAes.Initialize has a check-then-act race on static state.</summary>
+    /// CUE4Parse's Aion2DatFileEncryption.Initialize has a check-then-act race on static state.</summary>
     public static void Warmup(DefaultFileProvider provider, EGame game)
     {
         if (game != EGame.GAME_Aion2) return;
-        try { Aion2DatFileAes.Initialize(provider); }
+        try { Aion2DatFileEncryption.Initialize(provider); }
         catch { /* no key manifest mounted — per-file decodes will fail and fall back to raw copies */ }
     }
 

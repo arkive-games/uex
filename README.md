@@ -8,7 +8,12 @@ CLI, a JSON-lines `serve` mode, and an `mcp` stdio server.
 
 ## Requirements
 
-- .NET 10 SDK (the CUE4Parse NuGet package targets `net10.0` only).
+- .NET 10 SDK.
+- **`git clone --recurse-submodules`.** CUE4Parse is built from a pinned submodule
+  under `external/`, not from NuGet — games reach CUE4Parse source well before a
+  release, and a missing game-specific provider fails *silently* (its containers
+  simply don't mount). Move a reference back to `PackageReference` once a release
+  carries what you need.
 - The game's pak files (a local install, or a copy of the `Paks` directory).
 - A per-game `.usmap` mappings file and, for encrypted games, the AES key.
 
@@ -122,10 +127,14 @@ transparently serves all configured games with lazy mounting and a per-profile
   `"game": "GAME_LordOfMysteries"` — the game-specific `0x05070004` (`84344836`),
   **not** plain `GAME_UE5_7` (`0x05070000`). FModel writes that same number as the
   profile's `UeVersion`, so copy it rather than reading "5.7" off the usmap name.
-  Its containers use a `.upak` extension for ordinary `.pak` files; CUE4Parse
-  mounts them. Note the client is `Online_Shipping.Windows.Cdn` and ships only
-  two `.utoc` — the rest of its data streams through IoStore On-Demand, so a
-  local install exposes the script and audio containers but almost no cooked art.
+  Its containers use a `.upak` extension for ordinary `.pak` files.
+  **Its `paksDir` must be the game root** (`.../Game/C7`), not `Content/Paks`:
+  only two of its `.utoc` are real files, and the rest of the container set is
+  described by `Content/package.manifest` with chunk names supplied by
+  `Content/Manifest_UFSFiles_Win64.txt`. `LoMDefaultFileProvider` needs to see
+  both, and uex selects it automatically for this game. Point it at
+  `Content/Paks` and you get 148k files and almost no cooked art instead of
+  591k — and nothing reports an error, which is the trap.
 - **First mount downloads native decompression DLLs** (Oodle, zlib) into a
   `.uex-cache/` directory next to the executable — this needs network access
   once. Subsequent runs are offline.

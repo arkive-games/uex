@@ -18,11 +18,11 @@
     },
     "gmzz": {
       "game": "GAME_LordOfMysteries",
-      "paksDir": "D:/GMZZLauncher/Game/C7/Content/Paks",
+      "paksDir": "D:/GMZZLauncher/Game/C7",
       "usmap": "FILL_ME/5.7.4- Lord of Mysteries.usmap",
       "aesKey": "0xFILL_ME",
       "outputDir": "D:/GMZZLauncher/uex-out/gmzz",
-      "exportRoots": ["C7/Content/ScriptOPCode", "C7/Config"]
+      "exportRoots": ["C7/Content/ScriptOPCode", "C7/Content/Arts/UI_2/Resource/Item"]
     }
   }
 }
