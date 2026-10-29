@@ -82,6 +82,51 @@ exportCommand.SetAction(parse => Run(() =>
 }));
 root.Subcommands.Add(exportCommand);
 
+// ---- export-mesh -----------------------------------------------------------
+var meshPathsOption = new Option<string[]>("--only") { Description = "Virtual paths/prefixes to export meshes from", AllowMultipleArgumentsPerToken = true, Required = true };
+var meshOutOption = new Option<string?>("--out") { Description = "Output directory (default: <outputDir>/../<profile>-meshes)" };
+var meshFormatOption = new Option<string>("--format") { Description = "gltf2 | actorx | ueformat | usd", DefaultValueFactory = _ => "gltf2" };
+var noMaterialsOption = new Option<bool>("--no-materials") { Description = "Skip materials and their textures (geometry only)" };
+var exportMeshCommand = new Command("export-mesh", "Export skeletal/static meshes under given paths (glTF by default)");
+exportMeshCommand.Options.Add(profileOption);
+exportMeshCommand.Options.Add(meshPathsOption);
+exportMeshCommand.Options.Add(meshOutOption);
+exportMeshCommand.Options.Add(meshFormatOption);
+exportMeshCommand.Options.Add(noMaterialsOption);
+exportMeshCommand.SetAction(parse => Run(() =>
+{
+    var config = ProfilesConfig.LoadDefault(parse.GetValue(configOption));
+    var profileName = parse.GetValue(profileOption)!;
+    var profile = config.GetProfile(profileName);
+    var format = parse.GetValue(meshFormatOption)!.ToLowerInvariant() switch
+    {
+        "gltf2" or "gltf" => CUE4Parse_Conversion.Options.EMeshFormat.Gltf2,
+        "actorx" or "psk" => CUE4Parse_Conversion.Options.EMeshFormat.ActorX,
+        "ueformat" or "uemodel" => CUE4Parse_Conversion.Options.EMeshFormat.UEFormat,
+        "usd" or "usda" => CUE4Parse_Conversion.Options.EMeshFormat.USD,
+        var other => throw new UexException($"Unknown --format '{other}'; use gltf2, actorx, ueformat or usd.")
+    };
+    // Meshes never land in outputDir: the arkive pipeline treats that tree as its own input
+    // and would see a mesh directory appear inside the JSON/PNG layout it validates.
+    var outDir = parse.GetValue(meshOutOption)
+        ?? (string.IsNullOrWhiteSpace(profile.OutputDir)
+            ? throw new UexException("Profile has no outputDir; pass --out explicitly.")
+            : Path.Combine(Path.GetDirectoryName(Path.GetFullPath(profile.OutputDir))!, $"{profileName}-meshes"));
+    using var providers = new ProviderManager(config);
+    var summary = MeshOps.Export(providers.Get(profileName), parse.GetValue(meshPathsOption)!,
+        outDir, format, exportMaterials: !parse.GetValue(noMaterialsOption), msg => Console.Error.WriteLine(msg));
+    foreach (var file in summary.Files) Console.WriteLine(file);
+    Console.Error.WriteLine($"exported: {summary.Meshes} meshes from {summary.Packages} packages -> {summary.Files.Count} files in {outDir}");
+    if (summary.Errors.Count > 0)
+    {
+        Console.Error.WriteLine($"{summary.Errors.Count} failed:");
+        foreach (var error in summary.Errors.Take(20)) Console.Error.WriteLine($"  {error}");
+        if (summary.Errors.Count > 20) Console.Error.WriteLine($"  ... and {summary.Errors.Count - 20} more");
+    }
+    return 0;
+}));
+root.Subcommands.Add(exportMeshCommand);
+
 // ---- list ------------------------------------------------------------------
 var listPathArg = new Argument<string>("path") { Description = "Virtual directory ('' = root)", DefaultValueFactory = _ => "" };
 var listCommand = new Command("list", "List children of a virtual directory (like FModel's tree)");

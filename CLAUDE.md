@@ -19,6 +19,12 @@ arkive pipeline (E:\arkive-games\arkive) and gives agents pak exploration via CL
 - `Core/ExportRunner` — batch export, FModel-compatible tree: packages → `.json`
   (serialized exports array), textures → `.png`, AION2 `.dat` → decoded `.json`,
   other files raw-copied.
+- `Core/MeshOps` (`export-mesh`) — skeletal/static meshes to glTF (default), ActorX,
+  UEFormat or USD, via `CUE4Parse_Conversion.ExportSession`. Deliberately writes to its
+  OWN directory, never `outputDir`: the arkive pipeline treats that tree as its input
+  and validates its shape. Materials and textures come along as sibling `Materials/*.json`
+  and `Textures/*.png` — the glTF itself carries material *names* only, no texture
+  bindings, so a consumer has to re-wire them from those JSONs.
 - `Core/Aion2Dat.cs` — ALL AION2-specific .dat handling isolated here. The decryption
   itself is CUE4Parse's own code (`CUE4Parse.GameTypes.Aion2.*` readers); this file is
   only the dispatch (which directory → which reader), which every consumer must supply —
@@ -42,6 +48,18 @@ arkive pipeline (E:\arkive-games\arkive) and gives agents pak exploration via CL
 - Source moves under you: `Aion2DatFileAes` became `Aion2DatFileEncryption`, and
   `ETextureFormat` moved to `CUE4Parse_Conversion.Options`. A ProjectReference also does
   not propagate the package's global usings, so namespaces must be spelled out.
+- **Native libraries are initialised in ONE place, `ProviderManager.EnsureNatives`.** Oodle
+  and zlib were there from the start; Detex (BC7 and the ETC formats, Windows only) was
+  not, and its absence is silent in the worst way — the decode throws per texture, the
+  export records one more asset error and still exits 0. Every BC7 texture in every export
+  was skipped that way, 86 of them in Palworld alone, until 2026-09. It now throws instead,
+  which is why it is a hard failure and not another warning.
+- **The pinned submodule carries one local patch**, `CUE4Parse-Conversion/Dto/MeshDto.cs`:
+  `ParseMeshRenderData`'s skip predicate is evaluated for every LOD index before the
+  quality filter narrows them, so a cooked mesh with a null LOD slot threw
+  NullReferenceException and lost the whole asset. The guard makes it skip null slots and
+  ones with no matching `LODInfo`. Re-apply or upstream it when bumping the submodule —
+  `git -C external/CUE4Parse diff` is the only record.
 - Games with their own container layout need their own provider — see
   `ProviderManager.CreateProvider`. Add the mapping there, never at the call site.
 - Test files need explicit `using Xunit;` (ImplicitUsings doesn't cover it).
