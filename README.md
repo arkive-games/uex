@@ -82,7 +82,7 @@ Config resolution order (first match wins). Each of the first two may name eithe
 
 | field         | meaning                                                        |
 |---------------|----------------------------------------------------------------|
-| `game`        | CUE4Parse `EGame` enum name, e.g. `GAME_Aion2`, `GAME_Palworld`|
+| `game`        | CUE4Parse `EGame` enum name, e.g. `GAME_Aion2`, `GAME_UE5_1`   |
 | `paksDir`     | directory containing the game's `.pak`/`.utoc` files           |
 | `usmap`       | path to the `.usmap` mappings file (optional for some games)   |
 | `aesKey`      | AES key as `0x…` hex, or `null` for unencrypted games          |
@@ -174,16 +174,25 @@ transparently serves all configured games with lazy mounting and a per-profile
   both, and uex selects it automatically for this game. Point it at
   `Content/Paks` and you get 148k files and almost no cooked art instead of
   591k — and nothing reports an error, which is the trap.
-- **First mount downloads native decompression DLLs** (Oodle, zlib) into a
-  `.uex-cache/` directory next to the executable — this needs network access
-  once. Subsequent runs are offline.
+- **Palworld** needs `"game": "GAME_UE5_1"`. The pinned CUE4Parse has no
+  `GAME_Palworld`; an unknown name fails the mount.
+- **Phantom Blade Zero** (profile `pbz`, UE project `ProjectPBZ`) is plain
+  `GAME_UE5_7` with `paksDir` at `ProjectPBZ/Content/Paks`. All 20 containers
+  mount with the generic provider (310,973 files).
+- **First mount downloads native decompression DLLs** (Oodle, zlib) from GitHub
+  into a `.uex-cache/` directory next to the executable; later runs are offline.
+  uex does this itself rather than leaving it to CUE4Parse, whose client ignores
+  proxies and can hang forever on a stalled download. It honours `HTTPS_PROXY`
+  and the Windows system proxy, gives up after 3 minutes, and fails with an
+  error rather than mounting without decompression. If GitHub is unreachable,
+  copy the two DLLs into `.uex-cache/` by hand.
 
 ## Development
 
 ```bash
 dotnet build
-dotnet test                                         # 49 tests, no game paks needed
-dotnet run --project src/Uex -- doctor --profile aion2   # real-pak smoke test
+dotnet test                                         # 57 tests, no game paks needed
+dotnet run --project src/Uex -- doctor --profile pbz     # real-pak smoke test
 dotnet publish src/Uex -c Release -o publish
 ```
 

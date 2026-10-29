@@ -7,7 +7,7 @@ arkive pipeline (E:\arkive-games\arkive) and gives agents pak exploration via CL
 ## Commands
 - Build: `dotnet build` — Test: `dotnet test` (57 tests, no paks needed) — Run: `dotnet run --project src/Uex -- <cmd>`
 - Publish: `dotnet publish src/Uex -c Release -o publish`
-- Real-pak health check: `dotnet run --project src/Uex -- doctor --profile aion2` (AION2 is installed locally; mounts ~1 min; Palworld is NOT on this machine)
+- Real-pak health check: `dotnet run --project src/Uex -- doctor --profile pbz` (with `UEX_PROFILES=E:/arkive-games/uex-profiles`). Installed here: palworld, gmzz, gmzz-base, pbz; AION2 is NOT.
 
 ## Architecture
 - `Config/ProfilesConfig` — named per-game profiles. Two layouts, chosen by whether the
@@ -21,7 +21,10 @@ arkive pipeline (E:\arkive-games\arkive) and gives agents pak exploration via CL
   On this machine the checkout is `E:/arkive-games/uex-profiles`.
 - `Core/ProviderManager` — lazily mounts one CUE4Parse provider per profile, cached,
   failed mounts evicted (retryable); every operation takes a `profile` parameter →
-  one process serves many games. Oodle/zlib DLLs auto-download to `.uex-cache/`.
+  one process serves many games. Oodle/zlib DLLs download to `.uex-cache/` through
+  `Core/NativeDownloads`, never CUE4Parse's own downloader: that one sets `UseProxy = false`
+  and times out only the headers, so behind Clash it hung forever, and when it failed
+  outright it only logged a warning and `doctor` still said OK.
 - `Core/OutputPaths`, `Core/VfsQuery` — pure, unit-tested (no paks needed).
 - `Core/ExportRunner` — batch export, FModel-compatible tree: packages → `.json`
   (serialized exports array), textures → `.png`, AION2 `.dat` → decoded `.json`,

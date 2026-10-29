@@ -1,7 +1,7 @@
 {
   "profiles": {
     "palworld": {
-      "game": "GAME_Palworld",
+      "game": "GAME_UE5_1",
       "paksDir": "E:/SteamLibrary/steamapps/common/Palworld/Pal/Content/Paks",
       "usmap": "FILL_ME/Palworld.usmap",
       "aesKey": null,

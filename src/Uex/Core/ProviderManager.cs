@@ -92,7 +92,7 @@ public sealed class ProviderManager(ProfilesConfig config) : IDisposable
 
     /// <summary>
     /// The native libraries every operation needs: Oodle/zlib for UE5 pak decompression
-    /// (downloaded once into .uex-cache next to the exe) and Detex for BC7/ETC texture
+    /// (downloaded once into .uex-cache next to the exe by <see cref="NativeDownloads"/>) and Detex for BC7/ETC texture
     /// decode (extracted from CUE4Parse-Conversion's embedded resources into the same
     /// cache). This is the single gate — every op reaches a provider through
     /// <see cref="Mount"/> — so initialization belongs here rather than at each call site.
@@ -104,8 +104,12 @@ public sealed class ProviderManager(ProfilesConfig config) : IDisposable
             if (_nativesReady) return;
             var cache = Path.Combine(AppContext.BaseDirectory, ".uex-cache");
             Directory.CreateDirectory(cache);
+            NativeDownloads.Ensure(cache);
             OodleHelper.Initialize(Path.Combine(cache, OodleHelper.OodleFileName));
             ZlibHelper.Initialize(Path.Combine(cache, ZlibHelper.DllName));
+            // Both only log a warning on failure; without them every compressed read fails later, far from the cause.
+            if (OodleHelper.Instance is null || ZlibHelper.Instance is null)
+                throw new UexException($"Could not load the Oodle/zlib DLLs from {cache}. Delete them to re-download.");
             EnsureDetex(cache);
             _nativesReady = true;
         }
