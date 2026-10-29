@@ -6,6 +6,7 @@ using CUE4Parse.GameTypes.LordOfMysteries.FileProvider;
 using CUE4Parse.MappingsProvider.Usmap;
 using CUE4Parse.UE4.Objects.Core.Misc;
 using CUE4Parse.UE4.Versions;
+using CUE4Parse_Conversion.Textures.BC;
 using Uex.Config;
 
 namespace Uex.Core;
@@ -87,7 +88,13 @@ public sealed class ProviderManager(ProfilesConfig config) : IDisposable
         };
     }
 
-    /// <summary>Oodle/zlib native decompression, required for UE5 paks. DLLs are downloaded once into .uex-cache next to the exe.</summary>
+    /// <summary>
+    /// The native libraries every operation needs: Oodle/zlib for UE5 pak decompression
+    /// (downloaded once into .uex-cache next to the exe) and Detex for BC7/ETC texture
+    /// decode (extracted from CUE4Parse-Conversion's embedded resources into the same
+    /// cache). This is the single gate — every op reaches a provider through
+    /// <see cref="Mount"/> — so initialization belongs here rather than at each call site.
+    /// </summary>
     private static void EnsureNatives()
     {
         lock (_nativesLock)
@@ -97,8 +104,27 @@ public sealed class ProviderManager(ProfilesConfig config) : IDisposable
             Directory.CreateDirectory(cache);
             OodleHelper.Initialize(Path.Combine(cache, OodleHelper.OodleFileName));
             ZlibHelper.Initialize(Path.Combine(cache, ZlibHelper.DllName));
+            EnsureDetex(cache);
             _nativesReady = true;
         }
+    }
+
+    /// <summary>
+    /// Detex decodes BC7 and the ETC formats, and only on Windows: elsewhere
+    /// <c>TextureDecoder</c> takes its managed branch and never asks for the library.
+    /// Leaving it uninitialized does not fail the run — the decode throws per texture and
+    /// the export reports it as one more asset error — so a whole pak's BC7 textures
+    /// (normal maps and masks, mostly) go missing while the export still exits 0. That is
+    /// how it went unnoticed; hence the hard failure rather than another warning.
+    /// </summary>
+    private static void EnsureDetex(string cache)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var path = Path.Combine(cache, DetexHelper.DLL_NAME);
+        if (!DetexHelper.LoadDll(path) || !File.Exists(path))
+            throw new UexException(
+                $"Could not extract {DetexHelper.DLL_NAME} to {cache} — BC7 and ETC textures would silently fail to decode.");
+        DetexHelper.Initialize(path);
     }
 
     public void Dispose()
