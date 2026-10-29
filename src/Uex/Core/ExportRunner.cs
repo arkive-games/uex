@@ -16,7 +16,7 @@ public static class ExportRunner
         IReadOnlyList<string>? only = null, Action<string>? log = null)
     {
         if (string.IsNullOrWhiteSpace(profile.OutputDir))
-            throw new UexException("Profile has no outputDir configured.");
+            throw new UexException($"Profile has no outputDir configured{profile.LocalHint("outputDir")}");
         var roots = only is { Count: > 0 } ? only : profile.ExportRoots;
         if (roots.Count == 0)
             throw new UexException("Nothing to export: profile has no exportRoots and no --only paths given.");

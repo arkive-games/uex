@@ -47,8 +47,10 @@ public sealed class ProviderManager(ProfilesConfig config) : IDisposable
         if (!Enum.TryParse<EGame>(p.Game, ignoreCase: true, out var game))
             throw new UexException(
                 $"Profile '{name}': unknown game '{p.Game}'. Use a CUE4Parse EGame name, e.g. GAME_Palworld, GAME_Aion2, GAME_UE5_1.");
+        if (string.IsNullOrWhiteSpace(p.PaksDir))
+            throw new UexException($"Profile '{name}': no paksDir configured{p.LocalHint("paksDir")}");
         if (!Directory.Exists(p.PaksDir))
-            throw new UexException($"Profile '{name}': paks directory not found: {p.PaksDir}");
+            throw new UexException($"Profile '{name}': paks directory not found: {p.PaksDir}{p.LocalHint("paksDir")}");
         if (p.Usmap is not null && !File.Exists(p.Usmap))
             throw new UexException($"Profile '{name}': usmap file not found: {p.Usmap}");
 

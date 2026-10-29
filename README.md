@@ -26,15 +26,53 @@ The usmap/AES/paths values come straight from a working FModel setup —
 
 ## Setup
 
+Profiles live in a separate repository,
+[arkive-games/uex-profiles](https://github.com/arkive-games/uex-profiles): **one directory
+per game**, holding that game's profile, its usmap and its AES key. Clone it and point uex at
+the checkout; the only thing to fill in is where each game is installed on your machine.
+
+```bash
+git clone git@github.com:arkive-games/uex-profiles.git
+cp uex-profiles/gmzz/local.example.json uex-profiles/gmzz/local.json   # edit paksDir/outputDir
+export UEX_PROFILES=/path/to/uex-profiles
+uex doctor --profile gmzz
+```
+
+```
+uex-profiles/
+  <game>/profile.json         committed: game, usmap (relative), aesKey, exportRoots, variants
+  <game>/<name>.usmap         committed
+  <game>/local.json           gitignored: { "<profile>": { "paksDir", "outputDir" } }
+```
+
+- Every `<game>/profile.json` is loaded; the profile is named after its directory, or after
+  each entry of `variants` when one game has several installs sharing a key and usmap
+  (`gmzz` and `gmzz-base`).
+- `usmap` is resolved relative to its `profile.json`, so the checkout works wherever it
+  is cloned.
+- `local.json` supplies `paksDir` and `outputDir` per profile name. A game without one
+  still loads, so games not installed on this machine don't get in the way; using it
+  fails with a message naming the `local.json` to create. A `local.json` key that is not one
+  of the game's profile names is rejected, so a typo fails loudly.
+
+The uex-profiles README documents the fields, the games and where each key and usmap came
+from.
+
+### Single-file profiles
+
+A single `profiles.json` with every field inline still works, and is how uex was configured
+before uex-profiles existed:
+
 ```bash
 cp profiles.example.json profiles.json
-# edit profiles.json — fill in paksDir, usmap, aesKey per game
+# edit profiles.json: fill in paksDir, usmap, aesKey per game
 ```
 
 `profiles.json` is **gitignored** because it holds AES keys and machine-specific
 paths. `profiles.example.json` is the committed template.
 
-Config resolution order (first match wins):
+Config resolution order (first match wins). Each of the first two may name either a
+`profiles.json` file or a uex-profiles directory:
 1. `--config <path>` global option
 2. `UEX_PROFILES` environment variable
 3. `./profiles.json` (current directory)
@@ -105,7 +143,7 @@ takes a `profile` param, so one server covers every game. Register it with:
 ```bash
 dotnet publish src/Uex -c Release -o publish
 claude mcp add uex --scope user \
-  -e UEX_PROFILES=E:/arkive-games/uex/profiles.json \
+  -e UEX_PROFILES=E:/arkive-games/uex-profiles \
   -- E:/arkive-games/uex/publish/uex.exe mcp
 ```
 
@@ -114,7 +152,8 @@ claude mcp add uex --scope user \
 Profiles *are* games. Because a `profile` argument threads through every
 operation and mounts are cached per profile, a single `serve` or `mcp` process
 transparently serves all configured games with lazy mounting and a per-profile
-`outputDir`. Add a new game by adding a profile entry — no code changes.
+`outputDir`. Add a new game by adding a directory to uex-profiles (or an entry to
+`profiles.json`) — no code changes.
 
 ## Game-specific notes
 

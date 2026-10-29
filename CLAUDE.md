@@ -5,13 +5,20 @@ arkive pipeline (E:\arkive-games\arkive) and gives agents pak exploration via CL
 `serve` (JSON-lines), and `mcp` (stdio MCP server).
 
 ## Commands
-- Build: `dotnet build` — Test: `dotnet test` (49 tests, no paks needed) — Run: `dotnet run --project src/Uex -- <cmd>`
+- Build: `dotnet build` — Test: `dotnet test` (57 tests, no paks needed) — Run: `dotnet run --project src/Uex -- <cmd>`
 - Publish: `dotnet publish src/Uex -c Release -o publish`
 - Real-pak health check: `dotnet run --project src/Uex -- doctor --profile aion2` (AION2 is installed locally; mounts ~1 min; Palworld is NOT on this machine)
 
 ## Architecture
-- `Config/ProfilesConfig` — named per-game profiles (profiles.json, gitignored: AES keys).
-  Resolution: --config > UEX_PROFILES env > ./profiles.json > exe dir.
+- `Config/ProfilesConfig` — named per-game profiles. Two layouts, chosen by whether the
+  resolved path is a directory: a **uex-profiles checkout** (the normal one; separate repo
+  arkive-games/uex-profiles, one `<game>/` dir with `profile.json` + usmap + AES key, and a
+  gitignored `local.json` holding `paksDir`/`outputDir` per profile name; usmap resolves
+  relative to its profile.json; `variants` gives one game several profile names), or a single
+  legacy `profiles.json` (gitignored). Resolution: --config > UEX_PROFILES env >
+  ./profiles.json > exe dir. In directory mode a missing paksDir only fails when that
+  profile is mounted, with a message naming the local.json to fill in.
+  On this machine the checkout is `E:/arkive-games/uex-profiles`.
 - `Core/ProviderManager` — lazily mounts one CUE4Parse provider per profile, cached,
   failed mounts evicted (retryable); every operation takes a `profile` parameter →
   one process serves many games. Oodle/zlib DLLs auto-download to `.uex-cache/`.
