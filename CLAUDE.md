@@ -5,7 +5,7 @@ arkive pipeline (E:\arkive-games\arkive) and gives agents pak exploration via CL
 `serve` (JSON-lines), and `mcp` (stdio MCP server).
 
 ## Commands
-- Build: `dotnet build` — Test: `dotnet test` (57 tests, no paks needed) — Run: `dotnet run --project src/Uex -- <cmd>`
+- Build: `dotnet build` — Test: `dotnet test` (61 tests, no paks needed) — Run: `dotnet run --project src/Uex -- <cmd>`
 - Publish: `dotnet publish src/Uex -c Release -o publish`
 - Real-pak health check: `dotnet run --project src/Uex -- doctor --profile pbz` (with `UEX_PROFILES=E:/arkive-games/uex-profiles`). Installed here: palworld, gmzz, gmzz-base, pbz; AION2 is NOT.
 
@@ -28,7 +28,8 @@ arkive pipeline (E:\arkive-games\arkive) and gives agents pak exploration via CL
 - `Core/OutputPaths`, `Core/VfsQuery` — pure, unit-tested (no paks needed).
 - `Core/ExportRunner` — batch export, FModel-compatible tree: packages → `.json`
   (serialized exports array), textures → `.png`, AION2 `.dat` → decoded `.json`,
-  other files raw-copied.
+  `.locres` → FModel-shaped `{namespace:{key:string}}` `.json` (`Core/Locres`), other
+  files raw-copied.
 - `Core/MeshOps` (`export-mesh`) — skeletal/static meshes to glTF (default), ActorX,
   UEFormat or USD, via `CUE4Parse_Conversion.ExportSession`. Deliberately writes to its
   OWN directory, never `outputDir`: the arkive pipeline treats that tree as its input

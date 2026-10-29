@@ -54,6 +54,8 @@ public static class AssetOps
         string content;
         if (Aion2Dat.Handles(provider.Versions.Game, vpath))
             content = Aion2Dat.ToJson(provider, vpath);
+        else if (Locres.Handles(vpath))
+            content = Locres.ToJson(provider, vpath);
         else if (OutputPaths.IsPackage(vpath))
             content = SerializePackage(provider, vpath);
         else

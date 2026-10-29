@@ -105,7 +105,7 @@ uex export --profile aion2 --only AION2/Content/UI          # subset by vpath
 uex list --profile aion2 AION2/Content/UI
 uex search --profile aion2 "*.uasset" --regex --limit 200
 
-# Dump one asset as FModel-style JSON to stdout (handles UE packages and .dat)
+# Dump one asset as FModel-style JSON to stdout (handles UE packages, .locres and .dat)
 uex preview --profile aion2 AION2/Content/UI/SomeTexture --max-bytes 200000
 
 # Export a single texture to PNG
@@ -114,7 +114,8 @@ uex preview-texture --profile aion2 AION2/Content/UI/SomeTexture --out out.png
 
 **Export output layout** (matches FModel — the arkive `tools/` pipeline depends
 on it): UE packages (`.uasset`/`.umap`) → `.json` (the serialized exports array);
-`UTexture` exports → `.png`; AION2 obfuscated `.dat` data files → decoded `.json`;
+`UTexture` exports → `.png`; `.locres` string tables → FModel-shaped
+`{ namespace: { key: string } }` `.json`; AION2 obfuscated `.dat` data files → decoded `.json`;
 everything else → raw copy. The run prints:
 
 ```

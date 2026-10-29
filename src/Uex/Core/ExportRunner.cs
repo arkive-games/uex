@@ -53,12 +53,12 @@ public static class ExportRunner
                         Interlocked.Increment(ref textures);
                     }
                 }
-                else if (Aion2Dat.Handles(game, vpath))
+                else if (Aion2Dat.Handles(game, vpath) || Locres.Handles(vpath))
                 {
                     try
                     {
                         WriteText(profile.OutputDir, OutputPaths.ForPackageJson(vpath),
-                            Aion2Dat.ToJson(provider, vpath));
+                            Locres.Handles(vpath) ? Locres.ToJson(provider, vpath) : Aion2Dat.ToJson(provider, vpath));
                         Interlocked.Increment(ref decodedData);
                     }
                     catch (Exception e)
