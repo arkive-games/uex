@@ -1,3 +1,4 @@
 [submodule "external/CUE4Parse"]
 	path = external/CUE4Parse
-	url = https://github.com/FabianFG/CUE4Parse.git
+	url = https://github.com/tc-imba/CUE4Parse.git
+
